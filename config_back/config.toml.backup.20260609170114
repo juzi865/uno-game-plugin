@@ -1,0 +1,33 @@
+[plugin]
+enabled = true
+config_version = "1.0.0"
+
+[game]
+max_players = 6
+allow_public_rooms = true
+auto_cleanup_minutes = 30
+bot_turn_delay_seconds = 1.5
+
+[web]
+enabled = true
+host = "127.0.0.1"
+port = 15810
+
+[commentary]
+templates = [
+    "嘿嘿，这把稳了！",
+    "看我的厉害！",
+    "运气不错嘛~",
+    "哼，这只是开始！",
+    "接招吧！",
+    "你还差得远呢！",
+    "哇，这张牌太棒了！",
+    "哈哈，你完蛋了！",
+    "别高兴太早！",
+    "看我逆转局势！",
+]
+
+[game_summary]
+enabled = false
+stream_id = "qq:3131244993:private"
+

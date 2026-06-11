@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNO 游戏</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #fff;
+  min-height: 100vh;
+}
+.hidden { display: none !important; }
+
+#lobby {
+  max-width: 600px; margin: 60px auto; padding: 20px;
+}
+#lobby h1 { text-align: center; font-size: 2.5em; margin-bottom: 10px; }
+#lobby .subtitle { text-align: center; color: #b8c8d8; margin-bottom: 30px; }
+.lobby-actions {
+  display: flex; gap: 10px; margin-bottom: 20px;
+}
+.lobby-actions input {
+  flex: 1; padding: 10px 14px; border: none; border-radius: 8px;
+  background: #2a2a4a; color: #fff; font-size: 14px;
+}
+.lobby-actions input::placeholder { color: #8899aa; }
+.btn {
+  padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
+  font-size: 14px; font-weight: bold; transition: all 0.2s;
+}
+.btn-primary { background: #e94560; color: #fff; }
+.btn-primary:hover { background: #d63851; }
+.btn-secondary { background: #3a3a6a; color: #fff; }
+.btn-secondary:hover { background: #4a4a8a; }
+.btn-success { background: #2ecc71; color: #fff; }
+.btn-success:hover { background: #27ae60; }
+.btn-warning { background: #f39c12; color: #fff; }
+.btn-warning:hover { background: #e67e22; }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-danger:hover { background: #c0392b; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-xs { padding: 3px 8px; font-size: 11px; }
+
+.room-list { margin-top: 20px; }
+.room-card {
+  background: #2a2a4a; border-radius: 10px; padding: 15px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.room-card .info { flex: 1; }
+.room-card .room-id { font-weight: bold; font-size: 1.1em; }
+.room-card .room-meta { color: #b8c8d8; font-size: 0.85em; margin-top: 4px; }
+.no-rooms { text-align: center; color: #99aabb; padding: 40px; }
+
+.name-setup {
+  background: #2a2a4a; border-radius: 10px; padding: 15px;
+  display: flex; gap: 10px; align-items: center; margin-bottom: 20px;
+}
+.name-setup label { color: #b8c8d8; white-space: nowrap; }
+.name-setup input {
+  flex: 1; padding: 8px 12px; border: none; border-radius: 6px;
+  background: #1a1a3e; color: #fff; font-size: 14px;
+}
+
+#game {
+  max-width: 960px; margin: 0 auto; padding: 10px;
+  display: flex; flex-direction: column; min-height: 100vh;
+}
+
+.top-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; margin-bottom: 10px;
+}
+.top-bar .room-info { font-size: 0.85em; color: #b8c8d8; }
+.top-bar .room-info strong { color: #fff; }
+
+.players-bar {
+  display: flex; gap: 8px; overflow-x: auto; padding: 10px 0;
+  margin-bottom: 10px;
+}
+.player-chip {
+  background: #2a2a4a; border-radius: 8px; padding: 8px 14px;
+  text-align: center; min-width: 80px; flex-shrink: 0;
+  border: 2px solid transparent; transition: all 0.3s;
+}
+.player-chip.active { border-color: #e94560; box-shadow: 0 0 10px rgba(233,69,96,0.4); }
+.player-chip .name { font-size: 0.9em; font-weight: bold; }
+.player-chip .count { font-size: 0.75em; color: #b8c8d8; margin-top: 2px; }
+.player-chip .badge {
+  display: inline-block; font-size: 0.7em; padding: 1px 6px;
+  border-radius: 4px; margin-top: 2px;
+}
+.badge-bot { background: #3a3a6a; color: #b8c8d8; }
+.badge-host { background: #f39c12; color: #fff; }
+.badge-uno { background: #e94560; color: #fff; animation: pulse 0.8s infinite; }
+@keyframes pulse { 50% { opacity: 0.6; } }
+
+.game-area {
+  flex: 1; display: flex; gap: 16px;
+}
+
+.board-section {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-start; padding: 20px 0;
+}
+.discard-area { text-align: center; margin-bottom: 20px; }
+.discard-area .label { font-size: 0.8em; color: #b8c8d8; margin-bottom: 8px; }
+.top-card {
+  width: 100px; height: 150px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; font-size: 1.5em; font-weight: bold;
+  border: 3px solid rgba(255,255,255,0.2); margin: 0 auto;
+}
+.top-card .card-value { font-size: 0.7em; margin-top: 4px; }
+.deck-info { color: #b8c8d8; font-size: 0.8em; margin-top: 10px; }
+.direction-indicator { font-size: 1.2em; margin-top: 8px; }
+
+.hand-section { padding: 10px 0; }
+.hand-section .hand-label {
+  font-size: 0.85em; color: #b8c8d8; margin-bottom: 8px;
+}
+.hand {
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+}
+.card-slot {
+  width: 72px; height: 108px; border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; font-size: 1.2em; font-weight: bold;
+  cursor: pointer; transition: all 0.2s; border: 2px solid transparent;
+  user-select: none;
+}
+.card-slot .card-value { font-size: 0.6em; margin-top: 3px; }
+.card-red { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+.card-yellow { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #222; }
+.card-blue { background: linear-gradient(135deg, #3498db, #2980b9); }
+.card-green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.card-wild { background: linear-gradient(135deg, #e74c3c, #f1c40f, #3498db, #2ecc71); }
+.card-wild .card-value { color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+.card-slot:hover { transform: translateY(-8px); }
+.card-slot.playable { border-color: #2ecc71; box-shadow: 0 0 12px rgba(46,204,113,0.5); }
+.card-slot.playable:hover { border-color: #27ae60; box-shadow: 0 0 16px rgba(46,204,113,0.7); }
+.card-slot.disabled { opacity: 0.5; cursor: not-allowed; }
+.card-slot.disabled:hover { transform: none; }
+
+.actions {
+  display: flex; gap: 10px; justify-content: center;
+  padding: 10px 0; flex-wrap: wrap;
+}
+
+/* Message log */
+.log-section {
+  width: 240px; flex-shrink: 0;
+  background: #2a2a4a; border-radius: 10px; padding: 12px;
+  display: flex; flex-direction: column; max-height: 400px;
+}
+.log-section .log-title {
+  font-size: 0.85em; color: #b8c8d8; margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.log-entries {
+  overflow-y: auto; flex: 1; font-size: 0.8em;
+}
+.log-entry {
+  padding: 4px 0; border-bottom: 1px solid #3a3a5a;
+  line-height: 1.4;
+}
+.log-entry.bot { color: #f1c40f; }
+.log-entry.player { color: #2ecc71; }
+.log-entry.system { color: #b8c8d8; }
+.log-entry.win { color: #e94560; font-weight: bold; }
+
+/* Color picker */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.modal {
+  background: #2a2a4a; border-radius: 14px; padding: 24px;
+  text-align: center; min-width: 300px;
+}
+.modal h3 { margin-bottom: 16px; }
+.color-choices {
+  display: flex; gap: 12px; justify-content: center;
+}
+.color-choice {
+  width: 56px; height: 56px; border-radius: 50%; cursor: pointer;
+  border: 3px solid transparent; transition: all 0.2s;
+}
+.color-choice:hover { transform: scale(1.15); border-color: #fff; }
+.color-choice.red { background: #e74c3c; }
+.color-choice.yellow { background: #f1c40f; }
+.color-choice.blue { background: #3498db; }
+.color-choice.green { background: #2ecc71; }
+
+/* Toast */
+.toast-container {
+  position: fixed; top: 20px; right: 20px; z-index: 200;
+}
+.toast {
+  background: #3a3a6a; padding: 12px 20px; border-radius: 8px;
+  margin-bottom: 8px; animation: slideIn 0.3s; font-size: 0.9em;
+  border-left: 4px solid #e94560; color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.toast.success { border-left-color: #2ecc71; }
+.toast.error { border-left-color: #e74c3c; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+.game-over-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 150;
+}
+.game-over-box {
+  background: #2a2a4a; border-radius: 16px; padding: 40px;
+  text-align: center;
+}
+.game-over-box h2 { font-size: 2em; margin-bottom: 10px; }
+.game-over-box .winner-name {
+  font-size: 1.5em; color: #f1c40f; margin-bottom: 20px;
+}
+
+@media (max-width: 720px) {
+  .game-area { flex-direction: column; }
+  .log-section { width: 100%; max-height: 200px; }
+}
+</style>
+</head>
+<body>
+
+<div id="lobby">
+  <h1>🃏 UNO</h1>
+  <p class="subtitle">在浏览器中直接游玩 UNO 卡牌游戏</p>
+
+  <div class="name-setup">
+    <label>昵称</label>
+    <input type="text" id="player-name" placeholder="输入你的昵称..." maxlength="12">
+    <button class="btn btn-sm btn-secondary" onclick="saveName()">保存</button>
+  </div>
+
+  <div class="lobby-actions">
+    <input type="text" id="join-room-id" placeholder="输入房间号加入..." maxlength="10">
+    <input type="text" id="qq-group-id" placeholder="QQ群号（可选，用于发送战绩）" maxlength="20">
+    <button class="btn btn-primary" onclick="createRoom()">创建房间</button>
+    <button class="btn btn-secondary" onclick="joinRoom()">加入</button>
+  </div>
+
+  <div class="room-list" id="room-list">
+    <div class="no-rooms">暂无房间，创建一个吧</div>
+  </div>
+</div>
+
+<div id="game" class="hidden">
+  <div class="top-bar">
+    <div class="room-info">房间 <strong id="game-room-id"></strong></div>
+    <div><button class="btn btn-sm btn-danger" onclick="leaveRoom()">退出</button></div>
+  </div>
+
+  <div class="players-bar" id="players-bar"></div>
+
+  <div class="game-area">
+    <div class="board-section">
+      <div class="discard-area">
+        <div class="label">弃牌堆</div>
+        <div class="top-card" id="top-card">
+          <span class="card-emoji" id="top-emoji">?</span>
+          <span class="card-value" id="top-value">等待开始</span>
+        </div>
+        <div class="deck-info" id="deck-info"></div>
+        <div class="direction-indicator" id="direction">↻</div>
+      </div>
+
+      <div class="hand-section">
+        <div class="hand-label">你的手牌 <span id="hand-count"></span></div>
+        <div class="hand" id="hand"></div>
+      </div>
+
+      <div class="actions" id="actions">
+        <button class="btn btn-success" onclick="drawCard()">摸牌</button>
+        <button class="btn btn-warning" onclick="sayUno()">UNO</button>
+      </div>
+    </div>
+
+    <div class="log-section">
+      <div class="log-title">游戏消息</div>
+      <div class="log-entries" id="log-entries"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="color-modal">
+  <div class="modal">
+    <h3>选择颜色</h3>
+    <div class="color-choices">
+      <div class="color-choice red" onclick="pickColor('red')"></div>
+      <div class="color-choice yellow" onclick="pickColor('yellow')"></div>
+      <div class="color-choice blue" onclick="pickColor('blue')"></div>
+      <div class="color-choice green" onclick="pickColor('green')"></div>
+    </div>
+  </div>
+</div>
+
+<div class="game-over-overlay hidden" id="game-over">
+  <div class="game-over-box">
+    <h2>🎉 游戏结束</h2>
+    <div class="winner-name" id="winner-name"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
+      <button class="btn btn-success" id="btn-restart" onclick="restartGame()">再来一局</button>
+      <button class="btn btn-primary" onclick="backToLobby()">返回大厅</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+const LS_NAME = 'uno_player_name';
+const LS_PID = 'uno_player_id';
+const LS_ROOM = 'uno_room_id';
+
+let state = { phase: 'waiting', players: [], my_index: -1 };
+let pollTimer = null;
+let pendingCardIndex = null;
+
+function saveName() {
+  const name = document.getElementById('player-name').value.trim() || '玩家';
+  localStorage.setItem(LS_NAME, name);
+  toast('昵称已保存: ' + name, 'success');
+}
+
+function getName() {
+  return localStorage.getItem(LS_NAME) || '玩家';
+}
+function getPlayerId() {
+  return localStorage.getItem(LS_PID) || '';
+}
+function setPlayerId(pid) {
+  localStorage.setItem(LS_PID, pid);
+}
+function getRoomId() {
+  return localStorage.getItem(LS_ROOM) || '';
+}
+function setRoomId(rid) {
+  localStorage.setItem(LS_ROOM, rid);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('player-name').value = getName();
+  document.getElementById('join-room-id').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') joinRoom();
+  });
+  loadRooms();
+  setInterval(loadRooms, 5000);
+  const rid = getRoomId();
+  const pid = getPlayerId();
+  if (rid && pid) {
+    fetchState(rid, pid, true);
+  }
+});
+
+function toast(msg, type) {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function addLog(msg, type) {
+  const el = document.getElementById('log-entries');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry' + (type ? ' ' + type : '');
+  entry.textContent = msg;
+  el.appendChild(entry);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function api(path, opts) {
+  try {
+    const res = await fetch(path, opts || {});
+    return await res.json();
+  } catch (e) {
+    toast('请求失败: ' + e.message, 'error');
+    return null;
+  }
+}
+
+async function loadRooms() {
+  const data = await api('/api/rooms');
+  if (!data) return;
+  const list = document.getElementById('room-list');
+  if (!data.rooms || data.rooms.length === 0) {
+    list.innerHTML = '<div class="no-rooms">暂无房间，创建一个吧</div>';
+    return;
+  }
+  const pid = getPlayerId();
+  list.innerHTML = data.rooms.map(r => {
+    const phase = r.phase === 'waiting' ? '等待中' : r.phase === 'playing' ? '游戏中' : '已结束';
+    const isHost = r.host_id === pid;
+    return '<div class="room-card">' +
+      '<div class="info">' +
+      '<div class="room-id">' + r.room_id + '</div>' +
+      '<div class="room-meta">' + r.player_count + '人 · ' + phase + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px">' +
+      (isHost ? '<button class="btn btn-xs btn-danger" onclick="destroyRoom(\'' + r.room_id + '\')">解散</button>' : '') +
+      '<button class="btn btn-xs btn-secondary" onclick="quickJoin(\'' + r.room_id + '\')">加入</button>' +
+      '</div>' +
+      '</div>';
+  }).join('');
+}
+
+async function quickJoin(rid) {
+  document.getElementById('join-room-id').value = rid;
+  joinRoom();
+}
+
+async function createRoom() {
+  const name = getName();
+  const group_id = document.getElementById('qq-group-id').value.trim();
+  const data = await api('/api/create-room', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, group_id }),
+  });
+  if (!data || data.error) { toast(data?.error || '创建失败', 'error'); return; }
+  setPlayerId(data.player_id);
+  setRoomId(data.room_id);
+  toast('房间已创建: ' + data.room_id, 'success');
+  enterGame(data.room_id, data.player_id);
+}
+
+async function joinRoom() {
+  const rid = document.getElementById('join-room-id').value.trim().toUpperCase();
+  if (!rid) { toast('请输入房间号', 'error'); return; }
+  const name = getName();
+  const data = await api('/api/join-room', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: rid, name }),
+  });
+  if (!data || data.error) { toast(data?.error || '加入失败', 'error'); return; }
+  setPlayerId(data.player_id);
+  setRoomId(data.room_id);
+  toast('已加入房间: ' + rid, 'success');
+  enterGame(data.room_id, data.player_id);
+}
+
+async function destroyRoom(rid) {
+  if (!confirm('确定解散房间 ' + rid + ' 吗？')) return;
+  const data = await api('/api/destroy-room', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: rid, player_id: getPlayerId() }),
+  });
+  if (data && data.message) toast(data.message);
+  loadRooms();
+}
+
+function enterGame(rid, pid) {
+  document.getElementById('lobby').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+  document.getElementById('log-entries').innerHTML = '';
+  document.getElementById('game-over').classList.add('hidden');
+  document.getElementById('game-room-id').textContent = rid;
+  fetchState(rid, pid);
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => fetchState(rid, pid), 2000);
+}
+
+async function fetchState(rid, pid, silent) {
+  const data = await api('/api/game-state?room_id=' + encodeURIComponent(rid) + '&player_id=' + encodeURIComponent(pid));
+  if (!data || data.error) {
+    if (!silent) toast(data?.error || '获取状态失败', 'error');
+    if (pollTimer) clearInterval(pollTimer);
+    return;
+  }
+  renderGame(rid, pid, data);
+}
+
+async function leaveRoom() {
+  const pid = getPlayerId();
+  await api('/api/leave', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ player_id: pid }),
+  });
+  backToLobby();
+}
+
+function backToLobby() {
+  if (pollTimer) clearInterval(pollTimer);
+  localStorage.removeItem(LS_ROOM);
+  localStorage.removeItem(LS_PID);
+  document.getElementById('game').classList.add('hidden');
+  document.getElementById('game-over').classList.add('hidden');
+  document.getElementById('lobby').classList.remove('hidden');
+  loadRooms();
+}
+
+function renderGame(rid, pid, s) {
+  if (!s || !s.players) return;
+
+  if (s.phase === 'ended' && s.winner) {
+    document.getElementById('game-over').classList.remove('hidden');
+    document.getElementById('winner-name').textContent = '🏆 ' + s.winner;
+    addLog(s.winner + ' 获胜！', 'win');
+    const me = s.players.find(p => p.player_id === pid);
+    document.getElementById('btn-restart').style.display = me && me.is_host ? '' : 'none';
+    return;
+  }
+
+  document.getElementById('game-over').classList.add('hidden');
+
+  // Players bar
+  const bar = document.getElementById('players-bar');
+  bar.innerHTML = s.players.map((p, i) => {
+    let badges = '';
+    if (p.is_bot) badges += '<span class="badge badge-bot">Bot</span> ';
+    if (p.is_host) badges += '<span class="badge badge-host">房主</span> ';
+    if (p.said_uno) badges += '<span class="badge badge-uno">UNO</span> ';
+    return '<div class="player-chip' + (p.is_current ? ' active' : '') + '">' +
+      '<div class="name">' + esc(p.name) + '</div>' +
+      '<div class="count">' + p.hand_count + '张</div>' +
+      '<div>' + badges + '</div>' +
+      (p.score > 0 ? '<div class="count" style="color:#ffd700">🏆' + p.score + '</div>' : '') + '</div>';
+  }).join('');
+
+  // Top card
+  if (s.top_card) {
+    const tc = s.top_card;
+    const colorCls = cardColorClass(tc.color);
+    document.getElementById('top-card').className = 'top-card ' + colorCls;
+    document.getElementById('top-emoji').textContent = tc.emoji;
+    document.getElementById('top-value').textContent = tc.value_display;
+  }
+
+  const colorDisplay = s.current_color_display || s.current_color;
+  const colorEmojis = { red: '🔴', yellow: '🟡', blue: '🔵', green: '🟢' };
+  document.getElementById('deck-info').textContent =
+    '牌堆 ' + s.remaining_cards + '张 · 当前颜色 ' + (colorEmojis[s.current_color] || '') + colorDisplay;
+  document.getElementById('direction').textContent = s.direction === 1 ? '↻ 顺时针' : '↺ 逆时针';
+
+  // Hand
+  loadHand(rid, pid, s);
+
+  // Actions
+  const actions = document.getElementById('actions');
+  if (s.phase === 'waiting') {
+    const isHost = s.players.some(p => p.player_id === pid && p.is_host);
+    actions.innerHTML =
+      (isHost ? '<button class="btn btn-success" onclick="startGame()">开始游戏</button>' +
+        '<button class="btn btn-secondary" onclick="addBot()">加机器人</button>' : '') +
+      '<button class="btn btn-danger" onclick="leaveRoom()">退出</button>';
+  } else if (s.phase === 'playing') {
+    const isMyTurn = s.my_index >= 0 && s.players[s.my_index] && s.players[s.my_index].is_current;
+    if (isMyTurn) {
+      actions.innerHTML =
+        '<button class="btn btn-success" onclick="drawCard()">摸牌</button>' +
+        '<button class="btn btn-warning" onclick="sayUno()">UNO</button>' +
+        '<button class="btn btn-danger" onclick="leaveRoom()">退出</button>';
+    } else {
+      let btns = '<button class="btn btn-warning" onclick="sayUno()">UNO</button>';
+      const cp = s.players[s.current_player_index];
+      if (cp && !cp.said_uno && cp.hand_count === 1) {
+        btns += '<button class="btn btn-danger" onclick="catchUno()">抓UNO</button>';
+      }
+      btns += '<button class="btn btn-danger" onclick="leaveRoom()">退出</button>';
+      actions.innerHTML = btns;
+    }
+  } else {
+    actions.innerHTML = '<button class="btn btn-danger" onclick="leaveRoom()">退出</button>';
+  }
+}
+
+async function loadHand(rid, pid, s) {
+  const data = await api('/api/hand?room_id=' + encodeURIComponent(rid) + '&player_id=' + encodeURIComponent(pid));
+  if (!data || data.error) {
+    document.getElementById('hand').innerHTML = '<div style="color:#99aabb">' + (data?.error || '无法获取手牌') + '</div>';
+    document.getElementById('hand-count').textContent = '';
+    return;
+  }
+  document.getElementById('hand-count').textContent = '(' + data.count + '张)';
+  const isMyTurn = s.my_index >= 0 && s.players[s.my_index] && s.players[s.my_index].is_current;
+  const hand = document.getElementById('hand');
+  hand.innerHTML = data.cards.map(c => {
+    const colorCls = cardColorClass(c.color);
+    const playable = c.playable && isMyTurn;
+    return '<div class="card-slot ' + colorCls +
+      (playable ? ' playable' : ' disabled') +
+      '" data-index="' + c.index + '" onclick="' +
+      (playable ? 'playCard(' + c.index + ', \'' + c.color + '\')' : '') +
+      '" title="' + esc(c.value_display) + '">' +
+      '<span class="card-emoji">' + c.emoji + '</span>' +
+      '<span class="card-value">' + esc(c.value_display) + '</span></div>';
+  }).join('');
+}
+
+function cardColorClass(color) {
+  const map = { red: 'card-red', yellow: 'card-yellow', blue: 'card-blue', green: 'card-green', wild: 'card-wild' };
+  return map[color] || 'card-wild';
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function playCard(index, color) {
+  if (color === 'wild') {
+    pendingCardIndex = index;
+    document.getElementById('color-modal').classList.remove('hidden');
+  } else {
+    doPlayCard(index, null);
+  }
+}
+
+function pickColor(c) {
+  document.getElementById('color-modal').classList.add('hidden');
+  if (pendingCardIndex !== null) {
+    doPlayCard(pendingCardIndex, c);
+    pendingCardIndex = null;
+  }
+}
+
+async function doPlayCard(index, chosenColor) {
+  const rid = getRoomId(), pid = getPlayerId();
+  const data = await api('/api/play-card', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: rid, player_id: pid, card_index: index, chosen_color: chosenColor }),
+  });
+  if (!data) return;
+  if (data.error) { toast(data.error, 'error'); return; }
+  if (data.message) { toast(data.message); addLog(data.message, 'player'); }
+  if (data.bot_messages) {
+    data.bot_messages.forEach(m => addLog(m, 'bot'));
+  }
+  if (data.game) renderGame(rid, pid, data.game);
+  else fetchState(rid, pid);
+}
+
+async function drawCard() {
+  const rid = getRoomId(), pid = getPlayerId();
+  const data = await api('/api/draw-card', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: rid, player_id: pid }),
+  });
+  if (!data) return;
+  if (data.error) { toast(data.error, 'error'); return; }
+  if (data.message) { toast(data.message); addLog(data.message, 'player'); }
+  if (data.bot_messages) {
+    data.bot_messages.forEach(m => addLog(m, 'bot'));
+  }
+  if (data.game) renderGame(rid, pid, data.game);
+  else fetchState(rid, pid);
+}
+
+async function sayUno() {
+  const rid = getRoomId(), pid = getPlayerId();
+  const data = await api('/api/say-uno', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: rid, player_id: pid }),
+  });
+  if (data && data.message) toast(data.message);
+}
+
+async function catchUno() {
+  const rid = getRoomId(), pid = getPlayerId();
+  const s = state;
+  if (!s) return;
+  const cp = s.players[s.current_player_index];
+  if (!cp) { toast('没有可抓的目标', 'error'); return; }
+  const data = await api('/api/catch-uno', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: rid, player_id: pid, target_id: cp.player_id }),
+  });
+  if (data && data.message) toast(data.message);
+}
+
+async function startGame() {
+  const rid = getRoomId(), pid = getPlayerId();
+  const data = await api('/api/start-game', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: rid, player_id: pid }),
+  });
+  if (!data) return;
+  if (data.error) { toast(data.error, 'error'); return; }
+  if (data.message) { toast(data.message, 'success'); addLog(data.message, 'system'); }
+  if (data.bot_messages) {
+    data.bot_messages.forEach(m => addLog(m, 'bot'));
+  }
+  if (data.game) renderGame(rid, pid, data.game);
+  else fetchState(rid, pid);
+}
+
+async function restartGame() {
+  const rid = getRoomId(), pid = getPlayerId();
+  const data = await api('/api/restart-game', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: rid, player_id: pid }),
+  });
+  if (!data) return;
+  if (data.error) { toast(data.error, 'error'); return; }
+  if (data.message) { toast(data.message, 'success'); addLog(data.message, 'system'); }
+  if (data.bot_messages) {
+    data.bot_messages.forEach(m => addLog(m, 'bot'));
+  }
+  if (data.game) renderGame(rid, pid, data.game);
+  else fetchState(rid, pid);
+}
+
+async function addBot() {
+  const rid = getRoomId(), pid = getPlayerId();
+  const data = await api('/api/add-bot', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room_id: rid, player_id: pid }),
+  });
+  if (!data) return;
+  if (data.error) { toast(data.error, 'error'); return; }
+  if (data.message) { toast(data.message); addLog(data.message, 'system'); }
+  fetchState(rid, pid);
+}
+</script>
+</body>
+</html>

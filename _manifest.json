@@ -1,0 +1,39 @@
+{
+  "manifest_version": 2,
+  "id": "uno-game-plugin",
+  "version": "1.0.0",
+  "name": "UNO 小游戏",
+  "description": "支持群聊和私聊的 UNO 牌插件，Bot 可参与对局，同时提供 API 供 EXE/APK 客户端接入。",
+  "author": {
+    "name": "MaiBot UNO Team",
+    "url": "https://github.com/Mai-with-u"
+  },
+  "license": "MIT",
+  "urls": {
+    "repository": "https://github.com/Mai-with-u/maibot-plugin-sdk"
+  },
+  "host_application": {
+    "min_version": "1.0.0",
+    "max_version": "1.99.99"
+  },
+  "sdk": {
+    "min_version": "2.0.0",
+    "max_version": "2.99.99"
+  },
+  "dependencies": [
+    {
+      "type": "python_package",
+      "name": "pydantic",
+      "version_spec": ">=2.0.0"
+    }
+  ],
+  "capabilities": [
+    "send.text",
+    "config.get",
+    "chat.get_stream_by_group_id",
+    "chat.get_stream_by_user_id"
+  ],
+  "i18n": {
+    "default_locale": "zh-CN"
+  }
+}
