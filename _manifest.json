@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "id": "uno-game-plugin",
+  "id": "juzi865.uno-game-plugin",
   "version": "1.0.0",
   "name": "UNO 小游戏",
   "description": "支持群聊和私聊的 UNO 牌插件，Bot 可参与对局，同时提供 API 供 EXE/APK 客户端接入。",
