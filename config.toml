@@ -31,6 +31,6 @@ templates = [
 
 [game_summary]
 enabled = true
-stream_id = "qq:3131244993:private"
+stream_id = "qq:YOUR_QQ_NUMBER:private"
 model_task = "replyer"
 

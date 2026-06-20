@@ -13,12 +13,13 @@ logger = logging.getLogger("plugin.uno.api")
 
 
 class UnoAPIServer:
-    def __init__(self, room_manager: RoomManager, host: str = "127.0.0.1", port: int = 15810) -> None:
+    def __init__(self, room_manager: RoomManager, host: str = "127.0.0.1", port: int = 15810, access_token: str = "") -> None:
         self._room_manager = room_manager
         self._host = host
         self._port = port
         self._server: Optional[asyncio.AbstractServer] = None
         self._running = False
+        self._access_token = access_token
 
     async def start(self) -> None:
         if self._running:
@@ -49,6 +50,11 @@ class UnoAPIServer:
             if not data:
                 return
             request = json.loads(data.decode("utf-8"))
+            if self._access_token and request.get("token") != self._access_token:
+                response = {"success": False, "error": "forbidden: invalid or missing token"}
+                writer.write(json.dumps(response).encode("utf-8"))
+                await writer.drain()
+                return
             response = await self._process_request(request)
             writer.write(json.dumps(response).encode("utf-8"))
             await writer.drain()

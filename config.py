@@ -35,6 +35,7 @@ class WebSection(PluginConfigBase):
     enabled: bool = Field(default=True, description="是否启用 Web 可视化界面（浏览器打开 http://127.0.0.1:端口 游玩）")
     host: str = Field(default="127.0.0.1", description="监听地址（建议保持 127.0.0.1）")
     port: int = Field(default=15810, description="监听端口（同机游玩保持默认即可）")
+    access_token: str = Field(default="", description="Web 访问令牌（留空则不校验；设置后访问需加 ?token=xxx 头）")
 
 
 class CommentarySection(PluginConfigBase):
@@ -77,6 +78,7 @@ class ApiSection(PluginConfigBase):
     enabled: bool = Field(default=False, description="是否启用 TCP API 服务（供 EXE/APK 客户端接入）")
     host: str = Field(default="127.0.0.1", description="监听地址（建议保持 127.0.0.1）")
     port: int = Field(default=15811, description="监听端口")
+    access_token: str = Field(default="", description="API 访问令牌（留空则不校验；客户端请求时需在 JSON 中携带 token 字段）")
 
 
 class UnoPluginConfig(PluginConfigBase):

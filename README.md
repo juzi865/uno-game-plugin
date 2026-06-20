@@ -113,9 +113,18 @@ bot_turn_delay_seconds = 1.5 # Bot出牌延迟
 
 [web]
 enabled = true               # Web可视化界面开关
-host = "127.0.0.1"           # 监听地址
+host = "127.0.0.1"           # 监听地址（开放局域网时改为 0.0.0.0）
 port = 15810                 # 监听端口
+access_token = ""            # 访问令牌（留空不校验；设置后需在 URL 加 ?token=xxx）
+
+[api]
+enabled = false              # TCP API 服务开关（供 EXE/APK 客户端）
+host = "127.0.0.1"
+port = 15811
+access_token = ""            # API 访问令牌（留空不校验）
 ```
+
+> ℹ️ **隐私说明**：对局结束后，`llm.generate` 能力会将玩家昵称和胜者名发送给 LLM 生成对局解说，可在 `config.toml` 的 `[game_summary]` 中关闭（`enabled = false`）。
 
 修改配置后执行 `/pm plugin reload uno-game-plugin` 热重载生效。
 
@@ -138,7 +147,10 @@ A: 改 `config.toml` 中的 `bot_turn_delay_seconds` 为更小值。
 **Q: 能让局域网其他人一起玩吗？**
 A: 将 `config.toml` 中 `host` 改为 `0.0.0.0`，其他人用你的局域网 IP 访问即可（如 `http://192.168.x.x:15810`）。
 
-> ⚠️ **安全提示**：`host = "0.0.0.0"` 会监听所有网络接口。如果你在公共网络或不可信环境中使用，建议：
-> - 仅在受信任的局域网内开放
-> - 不要将此端口暴露到公网（该服务无鉴权机制）
-> - 使用完毕后改回 `127.0.0.1`
+> 🚨 **安全警告**：
+> Web/API 服务默认无鉴权，任何能访问该端口的人均可创建、加入、操控房间并查看其他玩家手牌。
+> 在开放网络前请务必执行以下操作：
+> - **设置访问令牌**：在 `config.toml` 的 `[web]` 配置中添加 `access_token = "你的随机密码"`。设置后访问所有 API 端点需携带 `?token=你的随机密码` 参数。
+> - **TCP API 同理**：在 `[api]` 配置中设置 `access_token`，客户端请求时需要在 JSON 中传入 `token` 字段。
+> - **不要将服务端口暴露到公网**。仅在受信任的局域网内开放。
+> - **使用完毕后改回 `host = "127.0.0.1"`**。

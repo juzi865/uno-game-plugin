@@ -41,6 +41,7 @@ class UnoPlugin(MaiBotPlugin):
                 commentary_templates=self.config.commentary.templates,
                 on_game_end=self._on_web_game_end,
                 bot_uno_forget_probability=self.config.game.bot_uno_forget_probability,
+                access_token=self.config.web.access_token,
             )
             try:
                 await self._web_server.start()
@@ -52,6 +53,7 @@ class UnoPlugin(MaiBotPlugin):
                 self._room_manager,
                 host=self.config.api.host,
                 port=self.config.api.port,
+                access_token=self.config.api.access_token,
             )
             try:
                 await self._api_server.start()

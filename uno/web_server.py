@@ -38,7 +38,7 @@ def _make_response(status: int, body: Any, content_type: str = "application/json
         f"Content-Length: {len(body_bytes)}\r\n"
         f"Access-Control-Allow-Origin: *\r\n"
         f"Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-        f"Access-Control-Allow-Headers: Content-Type\r\n"
+        f"Access-Control-Allow-Headers: Content-Type, Authorization\r\n"
         f"Cache-Control: no-cache\r\n"
         f"\r\n"
     ).encode("utf-8")
@@ -83,6 +83,7 @@ class UnoWebServer:
         commentary_templates: Optional[List[str]] = None,
         on_game_end: Optional[Callable[..., Coroutine[Any, Any, None]]] = None,
         bot_uno_forget_probability: float = 0.15,
+        access_token: str = "",
     ) -> None:
         self._room_manager = room_manager
         self._host = host
@@ -91,6 +92,7 @@ class UnoWebServer:
         self._commentary_templates = commentary_templates or []
         self._on_game_end = on_game_end
         self._bot_uno_forget_probability = bot_uno_forget_probability
+        self._access_token = access_token
 
     async def start(self) -> None:
         self._server = await asyncio.start_server(
@@ -131,6 +133,10 @@ class UnoWebServer:
             if path == "/" or path == "/index.html":
                 await self._serve_html(writer)
             elif path.startswith("/api/"):
+                if self._access_token and query.get("token") != self._access_token:
+                    writer.write(_make_response(403, {"error": "forbidden: invalid or missing token"}))
+                    await writer.drain()
+                    return
                 await self._handle_api(method, path, query, body, writer)
             else:
                 writer.write(_make_response(404, {"error": "not found"}))
