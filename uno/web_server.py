@@ -36,9 +36,6 @@ def _make_response(status: int, body: Any, content_type: str = "application/json
         f"HTTP/1.1 {status} {'OK' if status == 200 else 'Not Found' if status == 404 else 'Bad Request'}\r\n"
         f"Content-Type: {content_type}; charset=utf-8\r\n"
         f"Content-Length: {len(body_bytes)}\r\n"
-        f"Access-Control-Allow-Origin: *\r\n"
-        f"Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-        f"Access-Control-Allow-Headers: Content-Type, Authorization\r\n"
         f"Cache-Control: no-cache\r\n"
         f"\r\n"
     ).encode("utf-8")
